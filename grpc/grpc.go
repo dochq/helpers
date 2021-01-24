@@ -67,7 +67,4 @@ CronLoop:
 			}
 		}
 	}
-
-	logging.Info("Exiting...")
-	os.Exit(0)
 }
