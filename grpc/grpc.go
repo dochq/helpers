@@ -23,13 +23,13 @@ import (
 
 var listener net.Listener
 
-func NewRPCServer(port string) (server *grpc.Server, err error) {
+func NewRPCServer(port string, opt grpc.ServerOption) (server *grpc.Server, err error) {
 	listener, err = net.Listen("tcp", port)
 	if err != nil {
 		return server, err
 	}
 
-	return grpc.NewServer(), nil
+	return grpc.NewServer(opt), nil
 }
 
 func StartServer(srv *grpc.Server) {
