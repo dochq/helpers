@@ -30,3 +30,11 @@ func (w *statusWriter) Write(b []byte) (int, error) {
 	w.length += n
 	return n, err
 }
+
+func GetResponseWriter(w interface{}) basehttp.ResponseWriter {
+	if out, ok := w.(*statusWriter); ok {
+		return out.ResponseWriter
+	}
+
+	return nil
+}
