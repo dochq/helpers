@@ -8,7 +8,6 @@ import (
 	"github.com/sendgrid/sendgrid-go"
 	"github.com/sendgrid/sendgrid-go/helpers/mail"
 
-	"github.com/DocHQ/logging"
 	"github.com/DocHQ/logging/sentry"
 )
 
@@ -21,12 +20,6 @@ type FileInfo struct {
 var sendgridClient *sendgrid.Client
 
 func init() {
-	// Init all our logging stuff
-	// Init sentry and connect to DSN
-	if os.Getenv("DEBUG") == "true" {
-		logging.Verbose = true
-	}
-
 	// Only enable sentry on production
 	if os.Getenv("ENVIRONMENT") == "production" {
 		if err := sentry.InitSentry(&sentry.ConfigOptions{
@@ -35,11 +28,7 @@ func init() {
 		}); err != nil {
 			panic(err)
 		}
-
-		// Enable the console logger and sentry logger
-		logging.Logger = append(logging.Logger, &sentry.Logger{IgnoreLevelBelow: 2})
 	}
-
 	sendgridClient = sendgrid.NewSendClient(os.Getenv("SENDGRID_API_KEY"))
 }
 
@@ -81,13 +70,12 @@ func SendGridEmail(sendGridEmailTmpl string, fromEmail *mail.Email, receipients 
 
 	res, err := sendgridClient.Send(sendData)
 	if err != nil {
-		return err
+		return fmt.Errorf("sendgridClient.Send: %s", err)
 	}
 
 	if res.StatusCode != 202 {
-		logging.Debugf("Error: %v ", res.Body)
-		return fmt.Errorf("incorrect status code reurned %v", res.StatusCode)
+		return fmt.Errorf("sendgridClient.Send: incorrect status code reurned: %v", res.StatusCode)
 	}
 
-	return err
+	return nil
 }
