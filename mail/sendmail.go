@@ -1,7 +1,6 @@
 package http
 
 import (
-	"bytes"
 	"encoding/base64"
 	"fmt"
 	"os"
@@ -16,7 +15,7 @@ import (
 type FileInfo struct {
 	Name   string
 	Type   string
-	Buffer *bytes.Buffer
+	Buffer []byte
 }
 
 var sendgridClient *sendgrid.Client
@@ -31,7 +30,7 @@ func init() {
 	// Only enable sentry on production
 	if os.Getenv("ENVIRONMENT") == "production" {
 		if err := sentry.InitSentry(&sentry.ConfigOptions{
-			Dsn:              "https://93478dd3044948559fb5e2d23a821d40@o239521.ingest.sentry.io/6033959",
+			Dsn:              os.Getenv("SENDGRID_API_URL"),
 			AttachStacktrace: true,
 		}); err != nil {
 			panic(err)
@@ -44,12 +43,13 @@ func init() {
 	sendgridClient = sendgrid.NewSendClient(os.Getenv("SENDGRID_API_KEY"))
 }
 
-func SendGridEmail(sendGridEmailTmpl string, fromEmail *mail.Email, receipients []string, subject, body string, fileInfo []*FileInfo) error {
+func SendGridEmail(sendGridEmailTmpl string, fromEmail *mail.Email, receipients []*mail.Email, subject, body string, fileInfo []*FileInfo) error {
 	var peopleToEmail []*mail.Email
 
 	for _, receipient := range receipients {
 		peopleToEmail = append(peopleToEmail, &mail.Email{
-			Address: receipient,
+			Name:    receipient.Name,
+			Address: receipient.Address,
 		})
 	}
 
@@ -63,13 +63,16 @@ func SendGridEmail(sendGridEmailTmpl string, fromEmail *mail.Email, receipients 
 		Personalizations: []*mail.Personalization{
 			{
 				To: peopleToEmail,
+				Substitutions: map[string]string{
+					"email_body": body,
+				},
 			},
 		},
 	}
 
 	for _, fl := range fileInfo {
 		sendData.AddAttachment(&mail.Attachment{
-			Content:     base64.StdEncoding.EncodeToString(fl.Buffer.Bytes()),
+			Content:     base64.StdEncoding.EncodeToString(fl.Buffer),
 			Type:        fl.Type,
 			Filename:    fl.Name,
 			Disposition: "attachment",
