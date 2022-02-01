@@ -75,7 +75,7 @@ func SendGridEmail(sendGridEmailTmpl string, fromEmail *mail.Email, receipients 
 	}
 
 	if res.StatusCode != 202 {
-		return fmt.Errorf("sendgridClient.Send: incorrect status code reurned: %v, %s", res.StatusCode, res.Body)
+		return fmt.Errorf("sendgridClient.Send: incorrect status code returned: %v, %s", res.StatusCode, res.Body)
 	}
 
 	return nil
