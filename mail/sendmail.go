@@ -23,7 +23,7 @@ func init() {
 	// Only enable sentry on production
 	if os.Getenv("ENVIRONMENT") == "production" {
 		if err := sentry.InitSentry(&sentry.ConfigOptions{
-			Dsn:              os.Getenv("SENDGRID_API_URL"),
+			Dsn:              os.Getenv("SENDGRID_API_DSN"),
 			AttachStacktrace: true,
 		}); err != nil {
 			panic(err)
@@ -52,8 +52,9 @@ func SendGridEmail(sendGridEmailTmpl string, fromEmail *mail.Email, receipients 
 		Personalizations: []*mail.Personalization{
 			{
 				To: peopleToEmail,
-				Substitutions: map[string]string{
-					"email_body": body,
+				DynamicTemplateData: map[string]interface{}{
+					"email_subject": subject,
+					"email_body":    body,
 				},
 			},
 		},
@@ -74,7 +75,7 @@ func SendGridEmail(sendGridEmailTmpl string, fromEmail *mail.Email, receipients 
 	}
 
 	if res.StatusCode != 202 {
-		return fmt.Errorf("sendgridClient.Send: incorrect status code reurned: %v", res.StatusCode)
+		return fmt.Errorf("sendgridClient.Send: incorrect status code returned: %v, %s", res.StatusCode, res.Body)
 	}
 
 	return nil
